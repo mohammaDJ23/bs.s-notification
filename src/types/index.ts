@@ -68,6 +68,6 @@ export interface RestoredUserObj extends CurrentUserObj {
 }
 
 export interface NotificationObj {
-  payload?: string;
+  payload?: Buffer | string | null;
   requestOptions?: RequestOptions;
 }
