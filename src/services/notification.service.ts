@@ -12,6 +12,38 @@ export class NotificationService {
   ) {}
 
   async subscribe(payload: SubscribeDto, user: User): Promise<MessageDto> {
+    const subscription = this.notificationRepository.create({
+      endpoint: payload.endpoint,
+      expirationTime: payload.expirationTime,
+      visitorId: payload.visitorId,
+      p256dh: payload.keys.p256dh,
+      auth: payload.keys.auth,
+    });
+    subscription.user = user;
+
+    const findedSubscription = await this.notificationRepository
+      .createQueryBuilder('notification')
+      .where('notification.visitorId = :visitorId')
+      .setParameters({ visitorId: payload.visitorId })
+      .getOne();
+
+    if (findedSubscription) {
+      await this.notificationRepository
+        .createQueryBuilder('notification')
+        .update()
+        .set(subscription)
+        .where('notification.visitor_id = :visitorId')
+        .setParameters({ visitorId: payload.visitorId })
+        .execute();
+    } else {
+      await this.notificationRepository
+        .createQueryBuilder()
+        .insert()
+        .into(Notification)
+        .values(subscription)
+        .execute();
+    }
+
     return { message: 'The subscription was created.' };
   }
 }
