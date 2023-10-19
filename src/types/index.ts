@@ -1,5 +1,6 @@
 import { Request as Req } from 'express';
 import { User } from 'src/entities';
+import { RequestOptions } from 'web-push';
 
 export interface CurrentUserObj {
   currentUser: User;
@@ -64,4 +65,9 @@ export interface DeletedUserObj extends CurrentUserObj {
 
 export interface RestoredUserObj extends CurrentUserObj {
   restoredUser: User;
+}
+
+export interface NotificationObj {
+  payload?: string;
+  requestOptions?: RequestOptions;
 }

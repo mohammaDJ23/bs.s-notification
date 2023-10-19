@@ -2,21 +2,26 @@ import { Controller } from '@nestjs/common';
 import {
   Ctx,
   MessagePattern,
+  EventPattern,
   Payload,
   RmqContext,
 } from '@nestjs/microservices';
 import { User } from 'src/entities';
-import { UserService } from 'src/services';
+import { NotificationService, UserService } from 'src/services';
 import {
   CreatedUserObj,
   DeletedUserObj,
+  NotificationObj,
   RestoredUserObj,
   UpdatedUserObj,
 } from 'src/types';
 
 @Controller('/message-patterns/v1/notification')
 export class NotificationMessagePatternController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly notificationService: NotificationService,
+  ) {}
 
   @MessagePattern('created_user')
   create(
@@ -48,5 +53,17 @@ export class NotificationMessagePatternController {
     @Ctx() context: RmqContext,
   ): Promise<User> {
     return this.userService.restore(payload, context);
+  }
+
+  @EventPattern('notification_to_owners')
+  sendNotificationToOwners(
+    @Payload() payload: NotificationObj,
+    @Ctx() context: RmqContext,
+  ): void {
+    this.notificationService.sendNotificationToOwners(
+      context,
+      payload.payload,
+      payload.requestOptions,
+    );
   }
 }
