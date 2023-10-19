@@ -2,8 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MessageDto, SubscribeDto } from 'src/dtos';
 import { User, Notification } from 'src/entities';
+import { UserRoles } from 'src/types';
 import { Repository } from 'typeorm';
-import { setVapidDetails } from 'web-push';
+import { setVapidDetails, sendNotification, RequestOptions } from 'web-push';
 
 @Injectable()
 export class NotificationService {
@@ -52,5 +53,33 @@ export class NotificationService {
     }
 
     return { message: 'The subscription was created.' };
+  }
+
+  async sendNotificationToOwners(
+    payload?: string,
+    requestOptions?: RequestOptions,
+  ): Promise<void> {
+    payload = payload || 'New notification';
+    requestOptions = requestOptions || {};
+
+    const owners = await this.notificationRepository
+      .createQueryBuilder('notification')
+      .leftJoin('notification.user', 'user')
+      .where('user.role = :userRole')
+      .setParameters({ userRole: UserRoles.OWNER })
+      .getMany();
+
+    let pushSubscription = null;
+    const pushSubscriptionRequests = owners.map((owner) => {
+      pushSubscription = {
+        endpoint: owner.endpoint,
+        keys: {
+          p256dh: owner.p256dh,
+          auth: owner.auth,
+        },
+      };
+      return sendNotification(pushSubscription, payload, requestOptions);
+    });
+    await Promise.all(pushSubscriptionRequests);
   }
 }
