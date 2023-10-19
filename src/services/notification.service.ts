@@ -3,13 +3,20 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { MessageDto, SubscribeDto } from 'src/dtos';
 import { User, Notification } from 'src/entities';
 import { Repository } from 'typeorm';
+import { setVapidDetails } from 'web-push';
 
 @Injectable()
 export class NotificationService {
   constructor(
     @InjectRepository(Notification)
     private readonly notificationRepository: Repository<Notification>,
-  ) {}
+  ) {
+    setVapidDetails(
+      `mailto:${process.env.VAPID_SUBJECT}`,
+      process.env.VAPID_PUBLICK_KEY,
+      process.env.VAPID_PRIVATE_KEY,
+    );
+  }
 
   async subscribe(payload: SubscribeDto, user: User): Promise<MessageDto> {
     const subscription = this.notificationRepository.create({
