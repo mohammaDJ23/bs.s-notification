@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { RmqContext, RpcException } from '@nestjs/microservices';
+import { RmqContext } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MessageDto, SubscribeDto } from 'src/dtos';
+import { MessageDto, SubscribeDto, UnsubscribeDto } from 'src/dtos';
 import { User, Notification } from 'src/entities';
 import { UserRoles } from 'src/types';
 import { Repository } from 'typeorm';
@@ -56,6 +56,23 @@ export class NotificationService {
     }
 
     return { message: 'The subscription was created.' };
+  }
+
+  async unsubscribe(payload: UnsubscribeDto, user: User): Promise<MessageDto> {
+    const result = await this.notificationRepository
+      .createQueryBuilder('notification')
+      .delete()
+      .where('notification.user_id = :userId')
+      .andWhere('notification.visitor_id = :visitorId')
+      .setParameters({
+        userId: user.userServiceId,
+        visitorId: payload.visitorId,
+      })
+      .execute();
+    if (result.affected) {
+      return { message: 'The notification was deleted.' };
+    }
+    return { message: 'No notification was deleted.' };
   }
 
   async sendNotificationToOwners(
