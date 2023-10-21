@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+  s-notification-prod:
+    image: ${DOCKER_USERNAME}/s-notification-prod
+    env_file:
+      - /root/config/s-notification-prod.env.txt
+    container_name: s-notification-prod
+    restart: always
+    ports:
+      - ${PORT}:${PORT}
+    networks:
+      - services_app-network
+
+networks:
+  services_app-network:
+    external: true
