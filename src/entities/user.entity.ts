@@ -58,6 +58,6 @@ export class User {
   @JoinColumn({ name: 'created_by', referencedColumnName: 'id' })
   parent: User;
 
-  @OneToOne(() => Notification, (notification) => notification.user)
+  @OneToMany(() => Notification, (notification) => notification.user)
   notification: Notification;
 }

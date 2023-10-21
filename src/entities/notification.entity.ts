@@ -6,6 +6,8 @@ import {
   UpdateDateColumn,
   JoinColumn,
   OneToOne,
+  OneToMany,
+  ManyToOne,
 } from 'typeorm';
 import { User } from '../entities';
 
@@ -35,7 +37,7 @@ export class Notification {
   @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt: Date;
 
-  @OneToOne(() => User, (user) => user.notification, { onDelete: 'CASCADE' })
+  @ManyToOne(() => User, (user) => user.notification)
   @JoinColumn({ name: 'user_id', referencedColumnName: 'userServiceId' })
   user: User;
 }

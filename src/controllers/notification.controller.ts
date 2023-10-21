@@ -6,10 +6,11 @@ import {
   UseInterceptors,
   Body,
   Post,
+  Delete,
 } from '@nestjs/common';
 import { ApiTags, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { CurrentUser } from 'src/decorators';
-import { ErrorDto, MessageDto, SubscribeDto } from 'src/dtos';
+import { ErrorDto, MessageDto, SubscribeDto, UnsubscribeDto } from 'src/dtos';
 import { User } from 'src/entities';
 import { JwtGuard } from 'src/guards';
 import { MessageSerializerInterceptor } from 'src/interceptors';
@@ -29,10 +30,25 @@ export class NotificationController {
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED, type: ErrorDto })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, type: ErrorDto })
   @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, type: ErrorDto })
-  subscibe(
+  subscribe(
     @Body() body: SubscribeDto,
     @CurrentUser() user: User,
   ): Promise<MessageDto> {
     return this.notificationService.subscribe(body, user);
+  }
+
+  @Delete('unsubscribe')
+  @HttpCode(HttpStatus.OK)
+  @UseInterceptors(MessageSerializerInterceptor)
+  @ApiBearerAuth()
+  @ApiResponse({ status: HttpStatus.OK, type: MessageDto })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, type: ErrorDto })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, type: ErrorDto })
+  @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, type: ErrorDto })
+  unsubscibe(
+    @Body() body: UnsubscribeDto,
+    @CurrentUser() user: User,
+  ): Promise<MessageDto> {
+    return this.notificationService.unsubscribe(body, user);
   }
 }

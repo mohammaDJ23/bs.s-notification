@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+  s-notification-staging:
+    image: ${DOCKER_USERNAME}/s-notification-staging
+    env_file:
+      - /root/config/s-notification-staging.env.txt
+    container_name: s-notification-staging
+    restart: always
+    ports:
+      - ${PORT}:${PORT}
+    networks:
+      - services_app-network
+
+networks:
+  services_app-network:
+    external: true

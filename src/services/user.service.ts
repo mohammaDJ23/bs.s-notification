@@ -37,17 +37,15 @@ export class UserService {
 
       if (findedUser) throw new ConflictException('The user already exist.');
 
-      payload.createdUser = Object.assign<User, Partial<User>>(
-        payload.createdUser,
-        {
-          userServiceId: payload.createdUser.id,
-        },
-      );
       const createdUser = await this.userRepository
         .createQueryBuilder()
         .insert()
         .into(User)
-        .values(payload.createdUser)
+        .values(
+          Object.assign<{}, User, Partial<User>>({}, payload.createdUser, {
+            userServiceId: payload.createdUser.id,
+          }),
+        )
         .returning('*')
         .exe({ noEffectError: 'Could not create the user.' });
       this.rabbitmqService.applyAcknowledgment(context);
