@@ -21,7 +21,7 @@ export class UserService {
   findById(id: number): Promise<User> {
     return this.userRepository
       .createQueryBuilder('user')
-      .where('user.user_service_id = :id', { id })
+      .where('user.id = :id', { id })
       .getOneOrFail();
   }
 
@@ -37,19 +37,15 @@ export class UserService {
 
       if (findedUser) throw new ConflictException('The user already exist.');
 
-      const createdUser = await this.userRepository
+      const newUser = await this.userRepository
         .createQueryBuilder()
         .insert()
         .into(User)
-        .values(
-          Object.assign<{}, User, Partial<User>>({}, payload.createdUser, {
-            userServiceId: payload.createdUser.id,
-          }),
-        )
+        .values(payload.createdUser)
         .returning('*')
         .exe({ noEffectError: 'Could not create the user.' });
       this.rabbitmqService.applyAcknowledgment(context);
-      return createdUser;
+      return newUser;
     } catch (error) {
       throw new RpcException(error);
     }
@@ -69,7 +65,7 @@ export class UserService {
           role: payload.updatedUser.role,
           updatedAt: new Date(payload.updatedUser.updatedAt),
         })
-        .where('public.user.user_service_id = :userId')
+        .where('public.user.id = :userId')
         .andWhere('public.user.created_by = :currentUserId')
         .setParameters({
           userId: payload.updatedUser.id,
@@ -89,7 +85,7 @@ export class UserService {
       const deletedUser = await this.userRepository
         .createQueryBuilder('public.user')
         .softDelete()
-        .where('public.user.user_service_id = :deletedUserId')
+        .where('public.user.id = :deletedUserId')
         .andWhere('public.user.deleted_at IS NULL')
         .andWhere('public.user.created_by = :currentUserId')
         .setParameters({
@@ -110,7 +106,7 @@ export class UserService {
       const restoredUser = await this.userRepository
         .createQueryBuilder('public.user')
         .restore()
-        .where('public.user.user_service_id = :restoredUserId')
+        .where('public.user.id = :restoredUserId')
         .andWhere('public.user.deleted_at IS NOT NULL')
         .andWhere('public.user.created_by = :currentUserId')
         .setParameters({

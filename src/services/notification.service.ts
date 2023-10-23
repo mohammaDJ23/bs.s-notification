@@ -65,7 +65,7 @@ export class NotificationService {
       .where('notification.user_id = :userId')
       .andWhere('notification.visitor_id = :visitorId')
       .setParameters({
-        userId: user.userServiceId,
+        userId: user.id,
         visitorId: payload.visitorId,
       })
       .execute();
