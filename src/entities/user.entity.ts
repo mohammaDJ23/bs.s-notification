@@ -16,6 +16,9 @@ import { Notification } from './notification.entity';
 @Entity()
 export class User {
   @PrimaryGeneratedColumn()
+  pId: number;
+
+  @Column({ type: 'integer', nullable: false, unique: true })
   id: number;
 
   @Column({ type: 'varchar', length: 45 })
@@ -32,9 +35,6 @@ export class User {
 
   @Column({ type: 'varchar', length: 12 })
   phone: string;
-
-  @Column({ unique: true })
-  userServiceId: number;
 
   @Column({
     type: 'enum',
