@@ -7,8 +7,11 @@ import {
   Body,
   Post,
   Delete,
+  Request,
 } from '@nestjs/common';
 import { ApiTags, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { Request as Req } from 'express';
+import { parse } from 'platform';
 import { CurrentUser } from 'src/decorators';
 import { ErrorDto, MessageDto, SubscribeDto, UnsubscribeDto } from 'src/dtos';
 import { User } from 'src/entities';
@@ -33,8 +36,9 @@ export class NotificationController {
   subscribe(
     @Body() body: SubscribeDto,
     @CurrentUser() user: User,
+    @Request() request: Req,
   ): Promise<MessageDto> {
-    return this.notificationService.subscribe(body, user);
+    return this.notificationService.subscribe(body, user, request);
   }
 
   @Delete('unsubscribe')

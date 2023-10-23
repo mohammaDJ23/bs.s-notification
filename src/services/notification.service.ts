@@ -7,6 +7,8 @@ import { UserRoles } from 'src/types';
 import { Repository } from 'typeorm';
 import { setVapidDetails, sendNotification, RequestOptions } from 'web-push';
 import { RabbitmqService } from './rabbitmq.service';
+import { Request } from 'express';
+import { parse } from 'platform';
 
 @Injectable()
 export class NotificationService {
@@ -22,13 +24,20 @@ export class NotificationService {
     );
   }
 
-  async subscribe(payload: SubscribeDto, user: User): Promise<MessageDto> {
+  async subscribe(
+    payload: SubscribeDto,
+    user: User,
+    request: Request,
+  ): Promise<MessageDto> {
+    const platform = parse(request.headers['user-agent']);
     const subscription = this.notificationRepository.create({
       endpoint: payload.endpoint,
       expirationTime: payload.expirationTime,
       visitorId: payload.visitorId,
       p256dh: payload.keys.p256dh,
       auth: payload.keys.auth,
+      deviceDescription: platform.description,
+      userAgent: platform.ua,
     });
     subscription.user = user;
 
