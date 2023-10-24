@@ -11,8 +11,15 @@ import {
   Get,
   Query,
   ParseIntPipe,
+  Param,
 } from '@nestjs/common';
-import { ApiTags, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiQuery,
+  ApiParam,
+} from '@nestjs/swagger';
 import { Request as Req } from 'express';
 import { CurrentUser, Roles } from 'src/decorators';
 import {
@@ -27,6 +34,7 @@ import { User, Notification } from 'src/entities';
 import { JwtGuard, RolesGuard } from 'src/guards';
 import {
   MessageSerializerInterceptor,
+  NotificationSerializerInterceptor,
   NotificationsSerializerInterceptor,
 } from 'src/interceptors';
 import { ParseNotificationListFiltersPipe } from 'src/pipes';
@@ -89,5 +97,20 @@ export class NotificationController {
     filters: NotificationListFiltersDto,
   ): Promise<[Notification[], number]> {
     return this.notificationService.findAll(page, take, filters);
+  }
+
+  @Get(':id')
+  @HttpCode(HttpStatus.OK)
+  @Roles(UserRoles.OWNER)
+  @UseGuards(RolesGuard)
+  @UseInterceptors(NotificationSerializerInterceptor)
+  @ApiParam({ name: 'id', type: 'number' })
+  @ApiBearerAuth()
+  @ApiResponse({ status: HttpStatus.OK, type: NotificationDto })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, type: ErrorDto })
+  @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, type: ErrorDto })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, type: ErrorDto })
+  findByIdOrFail(@Param('id', ParseIntPipe) id: number): Promise<Notification> {
+    return this.notificationService.findByIdOrFail(id);
   }
 }

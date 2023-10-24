@@ -14,6 +14,7 @@ import { setVapidDetails, sendNotification, RequestOptions } from 'web-push';
 import { RabbitmqService } from './rabbitmq.service';
 import { Request } from 'express';
 import { parse } from 'platform';
+import { NotificationDto } from 'src/dtos/notification.dto';
 
 @Injectable()
 export class NotificationService {
@@ -127,6 +128,15 @@ export class NotificationService {
         toDate: filters.toDate,
       })
       .getManyAndCount();
+  }
+
+  findByIdOrFail(id: number): Promise<Notification> {
+    return this.notificationRepository
+      .createQueryBuilder('notification')
+      .leftJoinAndSelect('notification.user', 'user')
+      .where('notification.id = :id')
+      .setParameters({ id })
+      .getOneOrFail();
   }
 
   async sendNotificationToOwners(
