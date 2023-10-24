@@ -14,20 +14,26 @@ export class Notification {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'varchar' })
+  @Column({ type: 'text' })
   endpoint: string;
 
   @Column({ type: 'bigint', nullable: true })
   expirationTime: number;
 
-  @Column({ type: 'varchar' })
+  @Column({ type: 'text' })
   visitorId: string;
 
-  @Column({ type: 'varchar' })
+  @Column({ type: 'text' })
   p256dh: string;
 
-  @Column({ type: 'varchar' })
+  @Column({ type: 'text' })
   auth: string;
+
+  @Column({ type: 'text', nullable: true })
+  deviceDescription: string;
+
+  @Column({ type: 'text', nullable: true })
+  userAgent: string;
 
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;

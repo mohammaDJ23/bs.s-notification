@@ -1,12 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { RmqContext } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MessageDto, SubscribeDto, UnsubscribeDto } from 'src/dtos';
+import {
+  MessageDto,
+  SubscribeDto,
+  UnsubscribeDto,
+  NotificationListFiltersDto,
+} from 'src/dtos';
 import { User, Notification } from 'src/entities';
 import { UserRoles } from 'src/types';
-import { Repository } from 'typeorm';
+import { Brackets, Repository } from 'typeorm';
 import { setVapidDetails, sendNotification, RequestOptions } from 'web-push';
 import { RabbitmqService } from './rabbitmq.service';
+import { Request } from 'express';
+import { parse } from 'platform';
+import { NotificationDto } from 'src/dtos/notification.dto';
 
 @Injectable()
 export class NotificationService {
@@ -22,13 +30,20 @@ export class NotificationService {
     );
   }
 
-  async subscribe(payload: SubscribeDto, user: User): Promise<MessageDto> {
+  async subscribe(
+    payload: SubscribeDto,
+    user: User,
+    request: Request,
+  ): Promise<MessageDto> {
+    const platform = parse(request.headers['user-agent']);
     const subscription = this.notificationRepository.create({
       endpoint: payload.endpoint,
       expirationTime: payload.expirationTime,
       visitorId: payload.visitorId,
       p256dh: payload.keys.p256dh,
       auth: payload.keys.auth,
+      deviceDescription: platform.description,
+      userAgent: platform.ua,
     });
     subscription.user = user;
 
@@ -73,6 +88,55 @@ export class NotificationService {
       return { message: 'The notification was deleted.' };
     }
     return { message: 'No notification was deleted.' };
+  }
+
+  findAll(
+    page: number,
+    take: number,
+    filters: NotificationListFiltersDto,
+  ): Promise<[Notification[], number]> {
+    return this.notificationRepository
+      .createQueryBuilder('notification')
+      .take(take)
+      .skip((page - 1) * take)
+      .orderBy('user.createdAt', 'DESC')
+      .leftJoinAndSelect('notification.user', 'user')
+      .where(
+        new Brackets((query) =>
+          query
+            .where(
+              'to_tsvector(notification.deviceDescription) @@ plainto_tsquery(:q)',
+            )
+            .orWhere('to_tsvector(user.first_name) @@ plainto_tsquery(:q)')
+            .orWhere('to_tsvector(user.last_name) @@ plainto_tsquery(:q)')
+            .orWhere("notification.deviceDescription ILIKE '%' || :q || '%'")
+            .orWhere("user.first_name ILIKE '%' || :q || '%'")
+            .orWhere("user.last_name ILIKE '%' || :q || '%'"),
+        ),
+      )
+      .andWhere('user.role = ANY(:roles)')
+      .andWhere(
+        'CASE WHEN (:fromDate)::BIGINT > 0 THEN COALESCE(EXTRACT(EPOCH FROM date(notification.createdAt)) * 1000, 0)::BIGINT >= (:fromDate)::BIGINT ELSE TRUE END',
+      )
+      .andWhere(
+        'CASE WHEN (:toDate)::BIGINT > 0 THEN COALESCE(EXTRACT(EPOCH FROM date(notification.createdAt)) * 1000, 0)::BIGINT <= (:toDate)::BIGINT ELSE TRUE END',
+      )
+      .setParameters({
+        q: filters.q,
+        roles: filters.roles,
+        fromDate: filters.fromDate,
+        toDate: filters.toDate,
+      })
+      .getManyAndCount();
+  }
+
+  findByIdOrFail(id: number): Promise<Notification> {
+    return this.notificationRepository
+      .createQueryBuilder('notification')
+      .leftJoinAndSelect('notification.user', 'user')
+      .where('notification.id = :id')
+      .setParameters({ id })
+      .getOneOrFail();
   }
 
   async sendNotificationToOwners(

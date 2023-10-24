@@ -22,6 +22,8 @@ export interface ClassConstructor {
   new (...args: any[]): {};
 }
 
+export type ListObj = [any[], number];
+
 export interface DtoConstructor {
   readonly construct: ClassConstructor;
 }
