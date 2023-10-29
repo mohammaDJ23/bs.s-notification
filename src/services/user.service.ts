@@ -66,11 +66,7 @@ export class UserService {
           updatedAt: new Date(payload.updatedUser.updatedAt),
         })
         .where('public.user.id = :userId')
-        .andWhere('public.user.created_by = :currentUserId')
-        .setParameters({
-          userId: payload.updatedUser.id,
-          currentUserId: payload.currentUser.id,
-        })
+        .setParameters({ userId: payload.updatedUser.id })
         .returning('*')
         .exe({ noEffectError: 'Could not update the user.' });
       this.rabbitmqService.applyAcknowledgment(context);
