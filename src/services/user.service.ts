@@ -83,11 +83,7 @@ export class UserService {
         .softDelete()
         .where('public.user.id = :deletedUserId')
         .andWhere('public.user.deleted_at IS NULL')
-        .andWhere('public.user.created_by = :currentUserId')
-        .setParameters({
-          deletedUserId: payload.deletedUser.id,
-          currentUserId: payload.currentUser.id,
-        })
+        .setParameters({ deletedUserId: payload.deletedUser.id })
         .returning('*')
         .exe({ noEffectError: 'Could not delete the user.' });
       this.rabbitmqService.applyAcknowledgment(context);
