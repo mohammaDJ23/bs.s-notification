@@ -28,7 +28,7 @@ export class NotificationMessagePatternController {
     @Payload() payload: CreatedUserObj,
     @Ctx() context: RmqContext,
   ): Promise<User> {
-    return this.userService.create(payload, context);
+    return this.userService.create(context, payload.payload, payload.user);
   }
 
   @MessagePattern('updated_user')
@@ -36,7 +36,7 @@ export class NotificationMessagePatternController {
     @Payload() payload: UpdatedUserObj,
     @Ctx() context: RmqContext,
   ): Promise<User> {
-    return this.userService.update(payload, context);
+    return this.userService.update(context, payload.payload, payload.user);
   }
 
   @MessagePattern('deleted_user')
@@ -44,7 +44,7 @@ export class NotificationMessagePatternController {
     @Payload() payload: DeletedUserObj,
     @Ctx() context: RmqContext,
   ): Promise<User> {
-    return this.userService.delete(payload, context);
+    return this.userService.delete(context, payload.payload, payload.user);
   }
 
   @MessagePattern('restored_user')
@@ -52,7 +52,7 @@ export class NotificationMessagePatternController {
     @Payload() payload: RestoredUserObj,
     @Ctx() context: RmqContext,
   ): Promise<User> {
-    return this.userService.restore(payload, context);
+    return this.userService.restore(context, payload.payload, payload.user);
   }
 
   @EventPattern('notification_to_owners')
@@ -62,8 +62,9 @@ export class NotificationMessagePatternController {
   ): void {
     this.notificationService.sendNotificationToOwners(
       context,
-      payload.payload,
-      payload.requestOptions,
+      payload.user,
+      payload.payload.data,
+      payload.payload.options,
     );
   }
 }
