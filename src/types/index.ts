@@ -6,6 +6,10 @@ export interface CurrentUserObj {
   currentUser: User;
 }
 
+export interface UserObj {
+  user: User;
+}
+
 export interface Request extends Req, CurrentUserObj {
   user: User;
 }
@@ -53,23 +57,25 @@ export enum UserRoles {
   USER = 'user',
 }
 
-export interface CreatedUserObj extends CurrentUserObj {
-  createdUser: User;
+export interface CreatedUserObj extends UserObj {
+  payload: User;
 }
 
-export interface UpdatedUserObj extends CurrentUserObj {
-  updatedUser: User;
+export interface UpdatedUserObj extends UserObj {
+  payload: User;
 }
 
-export interface DeletedUserObj extends CurrentUserObj {
-  deletedUser: User;
+export interface DeletedUserObj extends UserObj {
+  payload: User;
 }
 
-export interface RestoredUserObj extends CurrentUserObj {
-  restoredUser: User;
+export interface RestoredUserObj extends UserObj {
+  payload: User;
 }
 
-export interface NotificationObj {
-  payload?: Buffer | string | null;
-  requestOptions?: RequestOptions;
+export interface NotificationObj extends UserObj {
+  payload: {
+    data?: string | Buffer | null;
+    options?: RequestOptions;
+  };
 }
