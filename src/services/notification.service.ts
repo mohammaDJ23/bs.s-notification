@@ -8,13 +8,18 @@ import {
   NotificationListFiltersDto,
 } from 'src/dtos';
 import { User, Notification } from 'src/entities';
-import { SendNotificationToUserObj, UserRoles } from 'src/types';
+import { MessageObj, UserObj, UserRoles } from 'src/types';
 import { Brackets, Repository } from 'typeorm';
-import { setVapidDetails, sendNotification, RequestOptions } from 'web-push';
+import { setVapidDetails, sendNotification } from 'web-push';
 import { RabbitmqService } from './rabbitmq.service';
 import { Request } from 'express';
 import { parse } from 'platform';
-import { NotificationDto } from 'src/dtos/notification.dto';
+
+export interface CreatedUserPayloadObj extends UserObj {}
+
+export interface CreatedMessagePayloadObj extends UserObj {
+  message: MessageObj;
+}
 
 @Injectable()
 export class NotificationService {
@@ -139,16 +144,14 @@ export class NotificationService {
       .getOneOrFail();
   }
 
-  async sendNotificationToOwners(
+  async createdUserNotification(
     context: RmqContext,
+    payload: CreatedUserPayloadObj,
     user: User,
-    payload: string,
-    options?: RequestOptions,
   ): Promise<void> {
     try {
+      console.log('created user');
       this.rabbitmqService.applyAcknowledgment(context);
-
-      options = options || {};
 
       const owners = await this.notificationRepository
         .createQueryBuilder('notification')
@@ -166,8 +169,12 @@ export class NotificationService {
               auth: owner.auth,
             },
           },
-          payload,
-          options,
+          JSON.stringify(
+            Object.assign(payload, {
+              type: 'created_user',
+              title: 'A new user was created.',
+            }),
+          ),
         );
       });
       await Promise.all(pushSubscriptionRequests);
@@ -176,24 +183,19 @@ export class NotificationService {
     }
   }
 
-  async sendNotificationToUser(
+  async createdMessageNotification(
     context: RmqContext,
+    payload: CreatedMessagePayloadObj,
     user: User,
-    payload: string,
-    options?: RequestOptions,
   ): Promise<void> {
     try {
       this.rabbitmqService.applyAcknowledgment(context);
-
-      options = options || {};
-
-      const parsedPayload: SendNotificationToUserObj = JSON.parse(payload);
 
       const users = await this.notificationRepository
         .createQueryBuilder('notification')
         .leftJoin('notification.user', 'user')
         .where('user.id = :id')
-        .setParameters({ id: parsedPayload.targetUser.id })
+        .setParameters({ id: payload.user.id })
         .getMany();
 
       if (users.length) {
@@ -206,8 +208,12 @@ export class NotificationService {
                 auth: user.auth,
               },
             },
-            payload,
-            options,
+            JSON.stringify(
+              Object.assign(payload, {
+                type: 'created_message',
+                title: 'A new message was created.',
+              }),
+            ),
           );
         });
         await Promise.all(pushSubscriptionRequests);

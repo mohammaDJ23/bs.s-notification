@@ -7,11 +7,16 @@ import {
   RmqContext,
 } from '@nestjs/microservices';
 import { User } from 'src/entities';
-import { NotificationService, UserService } from 'src/services';
+import {
+  CreatedMessagePayloadObj,
+  CreatedUserPayloadObj,
+  NotificationService,
+  UserService,
+} from 'src/services';
 import {
   CreatedUserObj,
   DeletedUserObj,
-  NotificationObj,
+  NotificationPayloadObj,
   RestoredUserObj,
   UpdatedUserObj,
 } from 'src/types';
@@ -55,29 +60,27 @@ export class NotificationMessagePatternController {
     return this.userService.restore(context, payload.payload, payload.user);
   }
 
-  @EventPattern('notification_to_owners')
-  sendNotificationToOwners(
-    @Payload() payload: NotificationObj,
+  @EventPattern('created_user_notification')
+  createdUserNotification(
+    @Payload() payload: NotificationPayloadObj<CreatedUserPayloadObj>,
     @Ctx() context: RmqContext,
   ): void {
-    this.notificationService.sendNotificationToOwners(
+    this.notificationService.createdUserNotification(
       context,
-      payload.user,
       payload.payload.data,
-      payload.payload.options,
+      payload.user,
     );
   }
 
-  @EventPattern('notification_to_user')
-  sendNotificationToUser(
-    @Payload() payload: NotificationObj,
+  @EventPattern('created_message_notification')
+  createdMessageNotification(
+    @Payload() payload: NotificationPayloadObj<CreatedMessagePayloadObj>,
     @Ctx() context: RmqContext,
   ): void {
-    this.notificationService.sendNotificationToUser(
+    this.notificationService.createdMessageNotification(
       context,
-      payload.user,
       payload.payload.data,
-      payload.payload.options,
+      payload.user,
     );
   }
 }
