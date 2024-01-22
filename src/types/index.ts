@@ -75,7 +75,23 @@ export interface RestoredUserObj extends UserObj {
 
 export interface NotificationObj extends UserObj {
   payload: {
-    data?: string | Buffer | null;
+    data?: string;
     options?: RequestOptions;
   };
+}
+
+interface NotificationPayloadObj {
+  type: string;
+  title: string;
+}
+
+interface ExtraPayloadObj {
+  [key: string]: any;
+}
+
+export interface SendNotificationToUserObj
+  extends NotificationPayloadObj,
+    ExtraPayloadObj {
+  targetUser: User;
+  user: User;
 }

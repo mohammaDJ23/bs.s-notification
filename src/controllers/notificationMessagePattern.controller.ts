@@ -67,4 +67,17 @@ export class NotificationMessagePatternController {
       payload.payload.options,
     );
   }
+
+  @EventPattern('notification_to_user')
+  sendNotificationToUser(
+    @Payload() payload: NotificationObj,
+    @Ctx() context: RmqContext,
+  ): void {
+    this.notificationService.sendNotificationToUser(
+      context,
+      payload.user,
+      payload.payload.data,
+      payload.payload.options,
+    );
+  }
 }

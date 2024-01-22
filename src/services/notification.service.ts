@@ -8,7 +8,7 @@ import {
   NotificationListFiltersDto,
 } from 'src/dtos';
 import { User, Notification } from 'src/entities';
-import { UserRoles } from 'src/types';
+import { SendNotificationToUserObj, UserRoles } from 'src/types';
 import { Brackets, Repository } from 'typeorm';
 import { setVapidDetails, sendNotification, RequestOptions } from 'web-push';
 import { RabbitmqService } from './rabbitmq.service';
@@ -175,5 +175,41 @@ export class NotificationService {
     } catch (error) {
       console.error(error);
     }
+  }
+
+  async sendNotificationToUser(
+    context: RmqContext,
+    user: User,
+    payload: string,
+    options?: RequestOptions,
+  ): Promise<void> {
+    try {
+      this.rabbitmqService.applyAcknowledgment(context);
+
+      options = options || {};
+
+      const parsedPayload: SendNotificationToUserObj = JSON.parse(payload);
+
+      const user = await this.notificationRepository
+        .createQueryBuilder('notification')
+        .leftJoin('notification.user', 'user')
+        .where('user.id = :id')
+        .setParameters({ id: parsedPayload.targetUser.id })
+        .getOne();
+
+      if (user) {
+        sendNotification(
+          {
+            endpoint: user.endpoint,
+            keys: {
+              p256dh: user.p256dh,
+              auth: user.auth,
+            },
+          },
+          payload,
+          options,
+        );
+      }
+    } catch (error) {}
   }
 }
