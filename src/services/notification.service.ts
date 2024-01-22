@@ -19,6 +19,7 @@ export interface CreatedUserPayloadObj extends UserObj {}
 
 export interface CreatedMessagePayloadObj extends UserObj {
   message: MessageObj;
+  targetUser: User;
 }
 
 @Injectable()
@@ -150,23 +151,22 @@ export class NotificationService {
     user: User,
   ): Promise<void> {
     try {
-      console.log('created user');
       this.rabbitmqService.applyAcknowledgment(context);
 
-      const owners = await this.notificationRepository
+      const notifications = await this.notificationRepository
         .createQueryBuilder('notification')
         .leftJoin('notification.user', 'user')
         .where('user.role = :userRole')
         .setParameters({ userRole: UserRoles.OWNER })
         .getMany();
 
-      const pushSubscriptionRequests = owners.map((owner) => {
+      const pushSubscriptionRequests = notifications.map((notification) => {
         return sendNotification(
           {
-            endpoint: owner.endpoint,
+            endpoint: notification.endpoint,
             keys: {
-              p256dh: owner.p256dh,
-              auth: owner.auth,
+              p256dh: notification.p256dh,
+              auth: notification.auth,
             },
           },
           JSON.stringify(
@@ -191,33 +191,31 @@ export class NotificationService {
     try {
       this.rabbitmqService.applyAcknowledgment(context);
 
-      const users = await this.notificationRepository
+      const notifications = await this.notificationRepository
         .createQueryBuilder('notification')
         .leftJoin('notification.user', 'user')
         .where('user.id = :id')
-        .setParameters({ id: payload.user.id })
+        .setParameters({ id: payload.targetUser.id })
         .getMany();
 
-      if (users.length) {
-        const pushSubscriptionRequests = users.map((user) => {
-          return sendNotification(
-            {
-              endpoint: user.endpoint,
-              keys: {
-                p256dh: user.p256dh,
-                auth: user.auth,
-              },
+      const pushSubscriptionRequests = notifications.map((notification) => {
+        return sendNotification(
+          {
+            endpoint: notification.endpoint,
+            keys: {
+              p256dh: notification.p256dh,
+              auth: notification.auth,
             },
-            JSON.stringify(
-              Object.assign(payload, {
-                type: 'created_message',
-                title: 'A new message was created.',
-              }),
-            ),
-          );
-        });
-        await Promise.all(pushSubscriptionRequests);
-      }
+          },
+          JSON.stringify(
+            Object.assign(payload, {
+              type: 'created_message',
+              title: 'A new message was created.',
+            }),
+          ),
+        );
+      });
+      await Promise.all(pushSubscriptionRequests);
     } catch (error) {
       console.error(error);
     }
