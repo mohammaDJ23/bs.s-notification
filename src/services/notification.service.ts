@@ -190,25 +190,28 @@ export class NotificationService {
 
       const parsedPayload: SendNotificationToUserObj = JSON.parse(payload);
 
-      const user = await this.notificationRepository
+      const users = await this.notificationRepository
         .createQueryBuilder('notification')
         .leftJoin('notification.user', 'user')
         .where('user.id = :id')
         .setParameters({ id: parsedPayload.targetUser.id })
-        .getOne();
+        .getMany();
 
-      if (user) {
-        sendNotification(
-          {
-            endpoint: user.endpoint,
-            keys: {
-              p256dh: user.p256dh,
-              auth: user.auth,
+      if (users.length) {
+        const pushSubscriptionRequests = users.map((user) => {
+          return sendNotification(
+            {
+              endpoint: user.endpoint,
+              keys: {
+                p256dh: user.p256dh,
+                auth: user.auth,
+              },
             },
-          },
-          payload,
-          options,
-        );
+            payload,
+            options,
+          );
+        });
+        await Promise.all(pushSubscriptionRequests);
       }
     } catch (error) {}
   }
