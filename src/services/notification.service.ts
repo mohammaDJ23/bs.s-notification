@@ -142,13 +142,12 @@ export class NotificationService {
   async sendNotificationToOwners(
     context: RmqContext,
     user: User,
-    payload?: string | Buffer | null,
+    payload: string,
     options?: RequestOptions,
   ): Promise<void> {
     try {
       this.rabbitmqService.applyAcknowledgment(context);
 
-      payload = payload || JSON.stringify({ title: 'New notification' });
       options = options || {};
 
       const owners = await this.notificationRepository
