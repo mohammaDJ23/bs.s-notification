@@ -213,6 +213,8 @@ export class NotificationService {
         });
         await Promise.all(pushSubscriptionRequests);
       }
-    } catch (error) {}
+    } catch (error) {
+      console.error(error);
+    }
   }
 }
