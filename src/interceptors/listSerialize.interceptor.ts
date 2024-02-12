@@ -1,38 +1,33 @@
 import { CallHandler, ExecutionContext, NestInterceptor } from '@nestjs/common';
 import { plainToClass } from 'class-transformer';
 import { map, Observable } from 'rxjs';
-import { MessageDto } from 'src/dtos';
 import { NotificationDto } from 'src/dtos/notification.dto';
-import { ClassConstructor } from 'src/types';
+import { ClassConstructor, ListObj } from 'src/types';
 
-export class ObjectSerializerInterceptor implements NestInterceptor {
+export class ListSerializerInterceptor implements NestInterceptor {
   constructor(private dto: ClassConstructor) {}
 
   intercept(
     context: ExecutionContext,
     handler: CallHandler,
-  ): Observable<object> {
+  ): Observable<ListObj> {
     return handler.handle().pipe(
-      map((data: object) => {
-        return this.plainToClass(data);
+      map((data: ListObj) => {
+        let [list, quantity] = data;
+        list = list.map((item) => this.plainToClass(item));
+        return [list, quantity];
       }),
     );
   }
 
-  plainToClass(data: object) {
+  plainToClass(data: any) {
     return plainToClass(this.dto, data, {
       excludeExtraneousValues: true,
     });
   }
 }
 
-export class MessageSerializerInterceptor extends ObjectSerializerInterceptor {
-  constructor() {
-    super(MessageDto);
-  }
-}
-
-export class NotificationSerializerInterceptor extends ObjectSerializerInterceptor {
+export class NotificationsSerializerInterceptor extends ListSerializerInterceptor {
   constructor() {
     super(NotificationDto);
   }

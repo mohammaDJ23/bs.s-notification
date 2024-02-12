@@ -1,12 +1,6 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { RmqContext, RpcException } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
-import {
-  CreatedUserObj,
-  DeletedUserObj,
-  RestoredUserObj,
-  UpdatedUserObj,
-} from 'src/types';
 import { Repository } from 'typeorm';
 import { User } from '../entities';
 import { RabbitmqService } from './rabbitmq.service';
@@ -25,14 +19,12 @@ export class UserService {
       .getOneOrFail();
   }
 
-  async create(payload: CreatedUserObj, context: RmqContext): Promise<User> {
+  async create(context: RmqContext, payload: User, user: User): Promise<User> {
     try {
       let findedUser = await this.userRepository
         .createQueryBuilder('public.user')
         .withDeleted()
-        .where('public.user.email = :email', {
-          email: payload.createdUser.email,
-        })
+        .where('public.user.email = :email', { email: payload.email })
         .getOne();
 
       if (findedUser) throw new ConflictException('The user already exist.');
@@ -41,7 +33,7 @@ export class UserService {
         .createQueryBuilder()
         .insert()
         .into(User)
-        .values(payload.createdUser)
+        .values(payload)
         .returning('*')
         .exe({ noEffectError: 'Could not create the user.' });
       this.rabbitmqService.applyAcknowledgment(context);
@@ -51,26 +43,15 @@ export class UserService {
     }
   }
 
-  async update(payload: UpdatedUserObj, context: RmqContext): Promise<User> {
+  async update(context: RmqContext, payload: User, user: User): Promise<User> {
     try {
+      const newUser = this.userRepository.create(payload);
       const updatedUser = await this.userRepository
         .createQueryBuilder('public.user')
         .update()
-        .set({
-          email: payload.updatedUser.email,
-          firstName: payload.updatedUser.firstName,
-          lastName: payload.updatedUser.lastName,
-          password: payload.updatedUser.password,
-          phone: payload.updatedUser.phone,
-          role: payload.updatedUser.role,
-          updatedAt: new Date(payload.updatedUser.updatedAt),
-        })
-        .where('public.user.id = :userId')
-        .andWhere('public.user.created_by = :currentUserId')
-        .setParameters({
-          userId: payload.updatedUser.id,
-          currentUserId: payload.currentUser.id,
-        })
+        .set(newUser)
+        .where('public.user.id = :id')
+        .setParameters({ id: payload.id })
         .returning('*')
         .exe({ noEffectError: 'Could not update the user.' });
       this.rabbitmqService.applyAcknowledgment(context);
@@ -80,18 +61,14 @@ export class UserService {
     }
   }
 
-  async delete(payload: DeletedUserObj, context: RmqContext): Promise<User> {
+  async delete(context: RmqContext, payload: User, user: User): Promise<User> {
     try {
       const deletedUser = await this.userRepository
         .createQueryBuilder('public.user')
         .softDelete()
-        .where('public.user.id = :deletedUserId')
+        .where('public.user.id = :id')
         .andWhere('public.user.deleted_at IS NULL')
-        .andWhere('public.user.created_by = :currentUserId')
-        .setParameters({
-          deletedUserId: payload.deletedUser.id,
-          currentUserId: payload.currentUser.id,
-        })
+        .setParameters({ id: payload.id })
         .returning('*')
         .exe({ noEffectError: 'Could not delete the user.' });
       this.rabbitmqService.applyAcknowledgment(context);
@@ -101,18 +78,14 @@ export class UserService {
     }
   }
 
-  async restore(payload: RestoredUserObj, context: RmqContext): Promise<User> {
+  async restore(context: RmqContext, payload: User, user: User): Promise<User> {
     try {
       const restoredUser = await this.userRepository
         .createQueryBuilder('public.user')
         .restore()
-        .where('public.user.id = :restoredUserId')
+        .where('public.user.id = :id')
         .andWhere('public.user.deleted_at IS NOT NULL')
-        .andWhere('public.user.created_by = :currentUserId')
-        .setParameters({
-          restoredUserId: payload.restoredUser.id,
-          currentUserId: payload.currentUser.id,
-        })
+        .setParameters({ id: payload.id })
         .returning('*')
         .exe({ noEffectError: 'Could not restore the user.' });
       this.rabbitmqService.applyAcknowledgment(context);

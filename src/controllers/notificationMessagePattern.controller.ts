@@ -7,11 +7,16 @@ import {
   RmqContext,
 } from '@nestjs/microservices';
 import { User } from 'src/entities';
-import { NotificationService, UserService } from 'src/services';
+import {
+  CreatedMessagePayloadObj,
+  CreatedUserPayloadObj,
+  NotificationService,
+  UserService,
+} from 'src/services';
 import {
   CreatedUserObj,
   DeletedUserObj,
-  NotificationObj,
+  NotificationPayloadObj,
   RestoredUserObj,
   UpdatedUserObj,
 } from 'src/types';
@@ -28,7 +33,7 @@ export class NotificationMessagePatternController {
     @Payload() payload: CreatedUserObj,
     @Ctx() context: RmqContext,
   ): Promise<User> {
-    return this.userService.create(payload, context);
+    return this.userService.create(context, payload.payload, payload.user);
   }
 
   @MessagePattern('updated_user')
@@ -36,7 +41,7 @@ export class NotificationMessagePatternController {
     @Payload() payload: UpdatedUserObj,
     @Ctx() context: RmqContext,
   ): Promise<User> {
-    return this.userService.update(payload, context);
+    return this.userService.update(context, payload.payload, payload.user);
   }
 
   @MessagePattern('deleted_user')
@@ -44,7 +49,7 @@ export class NotificationMessagePatternController {
     @Payload() payload: DeletedUserObj,
     @Ctx() context: RmqContext,
   ): Promise<User> {
-    return this.userService.delete(payload, context);
+    return this.userService.delete(context, payload.payload, payload.user);
   }
 
   @MessagePattern('restored_user')
@@ -52,18 +57,30 @@ export class NotificationMessagePatternController {
     @Payload() payload: RestoredUserObj,
     @Ctx() context: RmqContext,
   ): Promise<User> {
-    return this.userService.restore(payload, context);
+    return this.userService.restore(context, payload.payload, payload.user);
   }
 
-  @EventPattern('notification_to_owners')
-  sendNotificationToOwners(
-    @Payload() payload: NotificationObj,
+  @EventPattern('created_user_notification')
+  createdUserNotification(
+    @Payload() payload: NotificationPayloadObj<CreatedUserPayloadObj>,
     @Ctx() context: RmqContext,
   ): void {
-    this.notificationService.sendNotificationToOwners(
+    this.notificationService.createdUserNotification(
       context,
-      payload.payload,
-      payload.requestOptions,
+      payload.payload.data,
+      payload.user,
+    );
+  }
+
+  @EventPattern('created_message_notification')
+  createdMessageNotification(
+    @Payload() payload: NotificationPayloadObj<CreatedMessagePayloadObj>,
+    @Ctx() context: RmqContext,
+  ): void {
+    this.notificationService.createdMessageNotification(
+      context,
+      payload.payload.data,
+      payload.user,
     );
   }
 }
