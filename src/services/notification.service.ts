@@ -105,7 +105,7 @@ export class NotificationService {
       .createQueryBuilder('notification')
       .take(take)
       .skip((page - 1) * take)
-      .orderBy('user.createdAt', 'DESC')
+      .orderBy('notification.createdAt', 'DESC')
       .leftJoinAndSelect('notification.user', 'user')
       .where(
         new Brackets((query) =>
