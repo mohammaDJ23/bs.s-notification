@@ -80,7 +80,7 @@ export class NotificationController {
     return this.notificationService.unsubscribe(body, user);
   }
 
-  @Delete('quantities')
+  @Get('quantities')
   @HttpCode(HttpStatus.OK)
   @Roles(UserRoles.OWNER)
   @UseGuards(RolesGuard)
@@ -94,7 +94,7 @@ export class NotificationController {
     return this.notificationService.quantities(user);
   }
 
-  @Delete('all/quantities')
+  @Get('all/quantities')
   @HttpCode(HttpStatus.OK)
   @Roles(UserRoles.OWNER)
   @UseGuards(RolesGuard)
