@@ -1,7 +1,7 @@
 import { CallHandler, ExecutionContext, NestInterceptor } from '@nestjs/common';
 import { plainToClass } from 'class-transformer';
 import { map, Observable } from 'rxjs';
-import { MessageDto } from 'src/dtos';
+import { MessageDto, NotificationQuantitiesDto } from 'src/dtos';
 import { NotificationDto } from 'src/dtos/notification.dto';
 import { ClassConstructor } from 'src/types';
 
@@ -35,5 +35,11 @@ export class MessageSerializerInterceptor extends ObjectSerializerInterceptor {
 export class NotificationSerializerInterceptor extends ObjectSerializerInterceptor {
   constructor() {
     super(NotificationDto);
+  }
+}
+
+export class NotificationQuantitiesSerializerInterceptor extends ObjectSerializerInterceptor {
+  constructor() {
+    super(NotificationQuantitiesDto);
   }
 }
