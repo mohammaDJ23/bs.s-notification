@@ -4,3 +4,4 @@ export * from './error.dto';
 export * from './unsubscribe.dto';
 export * from './notificationListFilters.dto';
 export * from './user.dto';
+export * from './notificationQuantities.dto';

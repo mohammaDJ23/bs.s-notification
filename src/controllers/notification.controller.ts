@@ -26,6 +26,7 @@ import {
   ErrorDto,
   MessageDto,
   NotificationListFiltersDto,
+  NotificationQuantitiesDto,
   SubscribeDto,
   UnsubscribeDto,
 } from 'src/dtos';
@@ -34,6 +35,7 @@ import { User, Notification } from 'src/entities';
 import { JwtGuard, RolesGuard } from 'src/guards';
 import {
   MessageSerializerInterceptor,
+  NotificationQuantitiesSerializerInterceptor,
   NotificationSerializerInterceptor,
   NotificationsSerializerInterceptor,
 } from 'src/interceptors';
@@ -76,6 +78,34 @@ export class NotificationController {
     @CurrentUser() user: User,
   ): Promise<MessageDto> {
     return this.notificationService.unsubscribe(body, user);
+  }
+
+  @Get('quantities')
+  @HttpCode(HttpStatus.OK)
+  @Roles(UserRoles.OWNER)
+  @UseGuards(RolesGuard)
+  @UseInterceptors(NotificationQuantitiesSerializerInterceptor)
+  @ApiBearerAuth()
+  @ApiResponse({ status: HttpStatus.OK, type: NotificationQuantitiesDto })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, type: ErrorDto })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, type: ErrorDto })
+  @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, type: ErrorDto })
+  quantities(@CurrentUser() user: User): Promise<NotificationQuantitiesDto> {
+    return this.notificationService.quantities(user);
+  }
+
+  @Get('all/quantities')
+  @HttpCode(HttpStatus.OK)
+  @Roles(UserRoles.OWNER)
+  @UseGuards(RolesGuard)
+  @UseInterceptors(NotificationQuantitiesSerializerInterceptor)
+  @ApiBearerAuth()
+  @ApiResponse({ status: HttpStatus.OK, type: NotificationQuantitiesDto })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, type: ErrorDto })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, type: ErrorDto })
+  @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, type: ErrorDto })
+  allQuantities(): Promise<NotificationQuantitiesDto> {
+    return this.notificationService.allQuantities();
   }
 
   @Get('all')

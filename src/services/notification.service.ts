@@ -6,6 +6,7 @@ import {
   SubscribeDto,
   UnsubscribeDto,
   NotificationListFiltersDto,
+  NotificationQuantitiesDto,
 } from 'src/dtos';
 import { User, Notification } from 'src/entities';
 import { MessageObj, UserObj, UserRoles } from 'src/types';
@@ -219,5 +220,21 @@ export class NotificationService {
     } catch (error) {
       console.error(error);
     }
+  }
+
+  quantities(user: User): Promise<NotificationQuantitiesDto> {
+    return this.notificationRepository
+      .createQueryBuilder('notification')
+      .select('COUNT(notification.id)::TEXT', 'quantities')
+      .where('notification.user_id = :userId')
+      .setParameters({ userId: user.id })
+      .getRawOne();
+  }
+
+  allQuantities(): Promise<NotificationQuantitiesDto> {
+    return this.notificationRepository
+      .createQueryBuilder('notification')
+      .select('COUNT(notification.id)::TEXT', 'quantities')
+      .getRawOne();
   }
 }
