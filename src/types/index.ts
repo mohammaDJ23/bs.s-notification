@@ -1,6 +1,7 @@
 import { Request as Req } from 'express';
 import { User } from 'src/entities';
 import { RequestOptions } from 'web-push';
+import { FieldValue } from '@google-cloud/firestore';
 
 export interface CurrentUserObj {
   currentUser: User;
@@ -73,9 +74,26 @@ export interface RestoredUserObj extends UserObj {
   payload: User;
 }
 
-export interface NotificationObj extends UserObj {
+export interface NotificationPayloadObj<T = {}> extends UserObj {
   payload: {
-    data?: string | Buffer | null;
+    data: T;
     options?: RequestOptions;
   };
+}
+
+export enum MessageStatus {
+  PENDING = 'pending',
+  SUCCESS = 'success',
+  ERROR = 'error',
+}
+
+export interface MessageObj {
+  id: string;
+  userId: number;
+  text: string;
+  isReaded: boolean;
+  status: MessageStatus;
+  createdAt: FieldValue;
+  updatedAt: FieldValue;
+  deletedAt: FieldValue | null;
 }

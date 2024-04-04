@@ -6,7 +6,6 @@ import { ClientsModule } from '@nestjs/microservices';
 import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Notification, User } from '../entities';
-import { AllExceptionFilter } from '../filters';
 import {
   NotificationController,
   NotificationMessagePatternController,
@@ -17,6 +16,13 @@ import {
   RabbitmqService,
   NotificationService,
 } from 'src/services';
+import {
+  AllExceptionFilter,
+  HttpExceptionFilter,
+  ObjectExceptionFilter,
+  QueryExceptionFilter,
+  RpcExceptionFilter,
+} from 'src/filters';
 
 @Module({
   imports: [
@@ -52,6 +58,10 @@ import {
     RabbitmqService,
     NotificationService,
     { provide: APP_FILTER, useClass: AllExceptionFilter },
+    { provide: APP_FILTER, useClass: ObjectExceptionFilter },
+    { provide: APP_FILTER, useClass: HttpExceptionFilter },
+    { provide: APP_FILTER, useClass: RpcExceptionFilter },
+    { provide: APP_FILTER, useClass: QueryExceptionFilter },
     {
       provide: APP_PIPE,
       useValue: new ValidationPipe({
