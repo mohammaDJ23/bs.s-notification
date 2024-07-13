@@ -37,7 +37,7 @@ import {
         database: process.env.DATABASE_NAME,
         namingStrategy: new CustomNamingStrategy(),
         entities: [User, Notification],
-        synchronize: true,
+        synchronize: process.env.NODE_ENV === 'development',
       }),
     }),
     TypeOrmModule.forFeature([User, Notification]),
