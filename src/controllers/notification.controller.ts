@@ -12,6 +12,7 @@ import {
   Query,
   ParseIntPipe,
   Param,
+  DefaultValuePipe,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -121,9 +122,13 @@ export class NotificationController {
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED, type: ErrorDto })
   @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, type: ErrorDto })
   findAll(
-    @Query('page', ParseIntPipe) page: number,
-    @Query('take', ParseIntPipe) take: number,
-    @Query('filters', ParseNotificationListFiltersPipe)
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('take', new DefaultValuePipe(10), ParseIntPipe) take: number,
+    @Query(
+      'filters',
+      new DefaultValuePipe(new NotificationListFiltersDto()),
+      ParseNotificationListFiltersPipe,
+    )
     filters: NotificationListFiltersDto,
   ): Promise<[Notification[], number]> {
     return this.notificationService.findAll(page, take, filters);
